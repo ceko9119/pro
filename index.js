@@ -22,7 +22,7 @@ const userStats = {
     games: parseInt(getQueryParam('games', '12')),
     wins: parseInt(getQueryParam('wins', '8')),
     losses: parseInt(getQueryParam('losses', '4')),
-    
+
     // Inventory quantities
     himoya: parseInt(getQueryParam('himoya', '1')),
     qotil_himoya: parseInt(getQueryParam('qotil_himoya', '0')),
@@ -30,7 +30,7 @@ const userStats = {
     miltiq: parseInt(getQueryParam('miltiq', '1')),
     maska: parseInt(getQueryParam('maska', '0')),
     soxta_hujjat: parseInt(getQueryParam('soxta_hujjat', '3')),
-    
+
     // Active toggles
     himoya_active: getQueryParam('himoya_active', 'true') === 'true',
     qotil_himoya_active: getQueryParam('qotil_himoya_active', 'true') === 'true',
@@ -62,7 +62,7 @@ function calculateRankAndLevel() {
     const games = userStats.games;
     let rank = "Novice";
     let levelTitle = "Daraja: Oddiy o'yinchi";
-    
+
     if (wins >= 15) {
         rank = "DON 👑";
         levelTitle = "Daraja: Boss (Don)";
@@ -78,7 +78,7 @@ function calculateRankAndLevel() {
     }
 
     const winRate = games > 0 ? Math.round((wins / games) * 100) : 0;
-    
+
     return { rank, levelTitle, winRate };
 }
 
@@ -88,17 +88,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const userNameEl = document.getElementById('user-name');
     const userUsernameEl = document.getElementById('user-username');
     const avatarImgEl = document.getElementById('user-avatar');
-    
+
+    const isVip = userStats.sub_type === 'vip';
+    let displayName = "";
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const tgUser = tg.initDataUnsafe.user;
-        userNameEl.textContent = tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '');
+        displayName = tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '');
         userUsernameEl.textContent = tgUser.username ? '@' + tgUser.username : '';
         if (tgUser.photo_url) {
             avatarImgEl.src = tgUser.photo_url;
         }
     } else {
-        userNameEl.textContent = userStats.first_name;
+        displayName = userStats.first_name;
         userUsernameEl.textContent = '@' + userStats.username;
+    }
+
+    if (isVip) {
+        userNameEl.innerHTML = `${displayName} <span class="vip-text-badge">👑 VIP</span>`;
+    } else {
+        userNameEl.textContent = displayName;
     }
 
     // Set Rank & XP
@@ -179,10 +187,24 @@ function renderSubUpgrades() {
     container.innerHTML = '';
 
     const sub = userStats.sub_type;
-    
+
     if (sub === 'vip') {
-        // VIP is max level, hide section
-        section.style.display = 'none';
+        container.innerHTML = `
+            <div class="sub-tier-card vip-card active-vip-card">
+                <div class="sub-card-details">
+                    <span class="sub-card-title">👑 VIP Status Faollashtirilgan</span>
+                    <span class="sub-card-desc" style="color: #ffd700; margin-bottom: 8px;">Premium imtiyozlaringiz faol:</span>
+                    <ul class="vip-perks-list" style="list-style: none; padding: 0; margin: 0 0 10px 0;">
+                        <li style="margin-bottom: 4px; font-size: 0.85rem;"><i class="fa-solid fa-check-circle text-gold"></i> Rol tanlashda maksimal ustuvorlik</li>
+                        <li style="margin-bottom: 4px; font-size: 0.85rem;"><i class="fa-solid fa-check-circle text-gold"></i> Do'kondagi barcha buyumlarga 25% chegirma</li>
+                        <li style="margin-bottom: 4px; font-size: 0.85rem;"><i class="fa-solid fa-check-circle text-gold"></i> Guruhda ovoz berishda 2 ta ovoz</li>
+                        <li style="margin-bottom: 4px; font-size: 0.85rem;"><i class="fa-solid fa-check-circle text-gold"></i> Profil uchun oltin neon ramkasi</li>
+                    </ul>
+                </div>
+                <button class="buy-btn" style="background: linear-gradient(135deg, #ffd700, #ffa500); color: #000; font-weight: 700; cursor: default;">FAOLLASHTIRILGAN</button>
+            </div>
+        `;
+        section.style.display = 'block';
         return;
     }
 
@@ -226,7 +248,7 @@ function renderShop() {
 
     Object.keys(itemsConfig).forEach(key => {
         const item = itemsConfig[key];
-        
+
         const sub = userStats.sub_type;
         let finalPrice = item.price;
         let originalPriceHtml = '';
